@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>RETDIK · Key Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#3b82f6;--pd:#2563eb;--cyan:#06b6d4;--bg:#e8f1fc;--t:#0f172a;--tm:#64748b;--bd:#e2e8f0;--ok:#10b981}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+#intro{position:fixed;inset:0;z-index:9999;background:#01050c;display:flex;align-items:center;justify-content:center;transition:opacity 1s ease,visibility 1s}
+#intro.hide{opacity:0;visibility:hidden;pointer-events:none}
+#introCanvas{position:absolute;inset:0;width:100%;height:100%}
+.intro-ui{position:absolute;bottom:28px;right:16px;display:flex;gap:10px;z-index:10}
+.intro-btn{padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);backdrop-filter:blur(8px);color:rgba(255,255,255,.7);font-size:.78rem;cursor:pointer;transition:.25s}
+.intro-btn:hover{background:rgba(6,182,212,.18);border-color:rgba(6,182,212,.45);color:#67e8f9}
+#app{min-height:100vh;opacity:0;transform:translateY(10px);transition:opacity .7s ease,transform .7s ease;background:linear-gradient(165deg,#dbeafe 0%,#e8f1fc 50%,#f0f7ff 100%)}
+#app.show{opacity:1;transform:none}
+.view{display:none}.view.active{display:block;animation:vin .45s ease}
+@keyframes vin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;max-width:420px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:7px;background:#fff;padding:5px 11px 5px 5px;border-radius:999px;box-shadow:0 1px 6px rgba(59,130,246,.08);text-decoration:none;color:inherit}
+.brand__logo{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:flex;align-items:center;justify-content:center}
+.brand__logo svg{width:13px;height:13px}
+.brand__text{font-size:.76rem;font-weight:600;line-height:1.15}
+.brand__text small{display:block;font-size:.56rem;font-weight:500;color:var(--tm);letter-spacing:.04em}
+.header__actions{display:flex;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:999px;font-size:.7rem;font-weight:500;background:#fff;border:1px solid var(--bd);color:var(--t);cursor:pointer;transition:.2s}
+.pill:hover{border-color:#93c5fd}
+.pill--buy{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none}
+.pill svg{width:12px;height:12px;flex-shrink:0}
+.container{max-width:400px;margin:0 auto;padding:4px 14px 60px}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(59,130,246,.08),0 1px 2px rgba(0,0,0,.03);padding:18px 16px 16px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,#06b6d4,#3b82f6,#8b5cf6)}
+.badge-row{display:flex;align-items:center;margin-bottom:8px}
+.badge{font-size:.6rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--p);background:#eff6ff;padding:3px 7px;border-radius:5px}
+.badge-icon{width:30px;height:30px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin-left:auto}
+.badge-icon svg{width:14px;height:14px;color:var(--p)}
+.title{font-size:1.22rem;font-weight:700;margin-bottom:2px;line-height:1.25}.title span{color:var(--p)}
+.subtitle{font-size:.72rem;color:var(--tm);margin-bottom:14px}
+.guide{display:flex;align-items:center;gap:10px;padding:10px 11px;background:#f8fafc;border:1px solid var(--bd);border-radius:10px;margin-bottom:12px;cursor:pointer;transition:.2s}
+.guide:hover{border-color:#93c5fd;background:#f0f7ff}
+.guide__thumb{width:38px;height:38px;border-radius:8px;background:#0f172a;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.guide__thumb svg{width:14px;height:14px;color:#fff}
+.guide__info strong{display:block;font-size:.8rem;font-weight:600}
+.guide__info span{font-size:.68rem;color:var(--tm)}
+.steps{display:flex;align-items:center;margin:12px 0 14px}
+.step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.step__dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;background:#f1f5f9;color:var(--tm);border:2px solid var(--bd);transition:.25s}
+.step__dot svg{width:11px;height:11px}
+.step.active .step__dot{background:var(--p);color:#fff;border-color:var(--p);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.step.done .step__dot{background:var(--ok);color:#fff;border-color:var(--ok)}
+.step__label{font-size:.58rem;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.02em}
+.step.active .step__label{color:var(--p)}.step.done .step__label{color:var(--ok)}
+.step-line{height:2px;flex:.45;background:var(--bd);margin-bottom:14px}.step-line.done{background:var(--ok)}
+.alert{display:flex;gap:8px;padding:10px 11px;border-radius:9px;margin-bottom:10px;font-size:.72rem;line-height:1.4}
+.alert svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+.alert--warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}.alert--warn svg{color:#d97706}
+.alert--info{background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e}.alert--info svg{color:#0284c7}
+.alert strong{display:block;margin-bottom:1px;font-size:.74rem}
+.route{border:1px solid var(--bd);border-radius:10px;padding:11px;margin-bottom:12px}
+.route__label{font-size:.62rem;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.route__item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f8fafc;border-radius:7px;margin-bottom:5px;font-size:.78rem;font-weight:500;transition:.3s}
+.route__item:last-child{margin-bottom:0}
+.route__item.done{background:#ecfdf5;border:1px solid #a7f3d0}
+.route__badge{font-size:.62rem;font-weight:600;padding:2px 6px;border-radius:4px;background:#d1fae5;color:#065f46}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border:none;border-radius:10px;font-size:.86rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn svg{width:15px;height:15px}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.25);margin-bottom:7px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,235,.35)}
+.btn-primary:active{transform:scale(.98)}
+.btn-secondary{background:#f8fafc;color:var(--tm);border:1px solid var(--bd);font-size:.78rem;padding:10px}
+.btn-secondary:hover{background:#f1f5f9;color:var(--t)}
+.btn-google{background:#fff;color:#3c4043;border:1px solid #dadce0;font-size:.84rem;margin-bottom:8px}
+.btn-google:hover{background:#f8f9fa;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.btn-google svg{width:18px;height:18px}
+.promo{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:9px;margin-top:8px}
+.promo__text{font-size:.7rem;line-height:1.3}.promo__text strong{display:block;font-size:.74rem;color:#5b21b6}.promo__text span{color:#7c3aed}
+.promo__btn{padding:6px 11px;border-radius:6px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;font-size:.68rem;font-weight:600;border:none;cursor:pointer;white-space:nowrap}
+.vault{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}
+.vault__title{font-size:.66rem;font-weight:600;color:var(--tm);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.vault__empty{font-size:.72rem;color:var(--tm);padding:8px 10px;background:#f8fafc;border-radius:7px;text-align:center}
+.discord-btn{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;padding:9px;border-radius:8px;background:#5865f2;color:#fff;font-size:.78rem;font-weight:600;text-decoration:none;transition:.2s}
+.discord-btn svg{width:15px;height:15px}.discord-btn:hover{background:#4752c4}
+.footer{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;font-size:.62rem;color:var(--tm)}
+.footer span{display:flex;align-items:center;gap:3px}.footer svg{width:10px;height:10px}
+.key-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.back-btn{width:32px;height:32px;border-radius:8px;background:#f1f5f9;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;color:var(--tm);flex-shrink:0}
+.back-btn:hover{background:#e2e8f0;color:var(--t)}.back-btn svg{width:15px;height:15px}
+.key-status{display:flex;align-items:center;gap:5px;font-size:.68rem;font-weight:600;color:var(--ok);background:#ecfdf5;padding:3px 8px;border-radius:999px}
+.key-status__dot{width:5px;height:5px;border-radius:50%;background:var(--ok);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.key-display{background:#0f172a!important;border-radius:12px;padding:24px 14px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+.key-display::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 20%,rgba(6,182,212,.15),transparent 55%);pointer-events:none}
+.key-display__label{font-size:.64rem;font-weight:600;color:rgba(148,163,184,.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;position:relative}
+.key-value{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:600;color:#22d3ee!important;letter-spacing:.06em;position:relative;text-shadow:0 0 16px rgba(34,211,238,.35);min-height:1.5em;word-break:break-all}
+.key-value.rolling{animation:kg .12s ease infinite alternate}
+@keyframes kg{from{text-shadow:0 0 8px rgba(34,211,238,.25)}to{text-shadow:0 0 20px rgba(34,211,238,.5)}}
+.key-value.revealed{animation:kr .5s ease}
+@keyframes kr{0%{transform:scale(.92);opacity:.4;filter:blur(3px)}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1;filter:none}}
+.key-meta{display:flex;justify-content:center;gap:14px;margin-top:12px;position:relative}
+.key-meta span{font-size:.64rem;color:rgba(148,163,184,.5);display:flex;align-items:center;gap:3px}
+.key-meta svg{width:11px;height:11px}
+.gen-progress{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:14px;overflow:hidden}
+.gen-progress__bar{height:100%;width:0%;background:linear-gradient(90deg,#06b6d4,#3b82f6);border-radius:2px;transition:width .08s linear}
+.key-actions{display:flex;gap:7px;margin-bottom:12px}
+.key-actions .btn{flex:1;padding:10px;font-size:.78rem}
+.btn-copy{background:linear-gradient(135deg,#06b6d4,#0891b2)!important;color:#fff!important}
+.btn-copy.copied{background:linear-gradient(135deg,#10b981,#059669)!important}
+.gen-status{text-align:center;padding:6px 0 2px;font-size:.74rem;color:var(--tm);min-height:22px}
+.gen-status.active{color:var(--p);font-weight:500}
+.info-row{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.info-item{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:#f8fafc;border-radius:8px;font-size:.74rem}
+.info-item__label{color:var(--tm);display:flex;align-items:center;gap:5px}.info-item__label svg{width:13px;height:13px}
+.info-item__value{font-weight:600}
+.auth-tabs{display:flex;gap:0;margin-bottom:16px;background:#f1f5f9;border-radius:10px;padding:3px}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:.78rem;font-weight:600;border-radius:8px;cursor:pointer;color:var(--tm);transition:.2s;border:none;background:transparent}
+.auth-tab.active{background:#fff;color:var(--t);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.7rem;font-weight:600;color:var(--tm);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.form-group input{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;font-size:.84rem;outline:none;transition:.2s;background:#fff}
+.form-group input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;font-size:.7rem;color:var(--tm)}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+.sound-toggle{position:fixed;bottom:16px;right:12px;z-index:100;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--bd);box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;color:var(--tm)}
+.sound-toggle:hover{border-color:#93c5fd;color:var(--p)}.sound-toggle svg{width:16px;height:16px}
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.25s;padding:16px}
+.modal-overlay.show{opacity:1;visibility:visible}
+.modal{background:#fff;border-radius:14px;padding:22px 18px;max-width:320px;width:100%;text-align:center;transform:scale(.94) translateY(10px);transition:transform .28s cubic-bezier(.22,1,.36,1);box-shadow:0 12px 32px rgba(0,0,0,.1)}
+.modal-overlay.show .modal{transform:none}
+.modal__icon{width:44px;height:44px;margin:0 auto 10px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center}
+.modal__icon svg{width:20px;height:20px;color:var(--p)}
+.modal h3{font-size:1.02rem;margin-bottom:5px}
+.modal p{font-size:.8rem;color:var(--tm);line-height:1.45;margin-bottom:16px}
+.modal__actions{display:flex;gap:7px}
+.modal__actions button{flex:1;padding:9px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.modal-cancel{background:#f1f5f9;color:var(--tm)}.modal-cancel:hover{background:#e2e8f0}
+.modal-ok{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+</style>
+</head>
+<body>
+<div id="intro">
+<canvas id="introCanvas"></canvas>
+<div class="intro-ui">
+<button class="intro-btn" id="unmuteBtn">Bật âm thanh</button>
+<button class="intro-btn" id="skipBtn">Bỏ qua</button>
+</div>
+</div>
+
+<div id="app">
+<header class="header">
+<a href="#" class="brand" onclick="return false">
+<div class="brand__logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+<div class="brand__text">Retdik<small>KEY ACCESS</small></div>
+</a>
+<div class="header__actions">
+<button class="pill" id="langBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Tiếng Việt</button>
+<button class="pill pill--buy" id="buyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Mua Key</button>
+</div>
+</header>
+<div class="container">
+<div class="view active" id="viewHome">
+<div class="card">
+<div class="badge-row"><span class="badge">Truy cập được bảo vệ</span>
+<div class="badge-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+</div>
+<h1 class="title">Mở khóa <span>Key</span> của bạn</h1>
+<p class="subtitle">0/3 key hoạt động trên trình duyệt này</p>
+<div class="guide" id="guideCard">
+<div class="guide__thumb"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+<div class="guide__info"><strong>Xem cách lấy Key</strong><span>Video hướng dẫn · Từng bước</span></div>
+</div>
+<div class="steps">
+<div class="step done"><div class="step__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="step__label">Phiên</div></div>
+<div class="step-line done"></div>
+<div class="step active"><div class="step__dot">2</div><div class="step__label">Xác minh</div></div>
+<div class="step-line"></div>
+<div class="step"><div class="step__dot">3</div><div class="step__label">Key</div></div>
+</div>
+<div class="alert alert--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<div><strong>Chỉ mua từ chính chủ Andes</strong>Chỉ mua từ <b>@Andes</b> — không mua qua người khác.</div>
+</div>
+<div class="alert alert--info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+<div><strong>Sẵn sàng xác minh</strong>Hoàn tất 2 link để nhận key 24 giờ</div>
+</div>
+<div class="route">
+<div class="route__label">Kênh xác minh</div>
+<div class="route__item" id="link1"><span>Link 1 · GTraffic.io</span><span class="route__badge" id="badge1">Pending</span></div>
+<div class="route__item" id="link2"><span>Link 2 · Sponsor</span><span class="route__badge" id="badge2" style="background:#f1f5f9;color:var(--tm)">Pending</span></div>
+</div>
+<button class="btn btn-primary" id="startBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Bắt đầu lấy key</button>
+<button class="btn btn-secondary" id="authBtn">Tạo tài khoản / Đăng nhập</button>
+<div class="promo"><div class="promo__text"><strong>Key trọn đời</strong><span>100.000 VND · @Andes</span></div><button class="promo__btn" id="promoBuy">Mua Key</button></div>
+<div class="vault"><div class="vault__title">Kho Key</div><div class="vault__empty" id="vaultEmpty">Chưa có key đã lưu</div></div>
+<a href="#" class="discord-btn" id="discordBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg> Discord</a>
+</div>
+<div class="footer"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> HASHED</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg> CLOUDFLARE</span></div>
+</div>
+
+<div class="view" id="viewAuth">
+<div class="card">
+<div class="key-header">
+<button class="back-btn" id="backAuth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+<div style="flex:1"><div style="font-size:.9rem;font-weight:700">Tạo tài khoản</div><div style="font-size:.66rem;color:var(--tm)">Đăng nhập để lưu key</div></div>
+</div>
+<div class="auth-tabs">
+<button class="auth-tab active" data-tab="login">Đăng nhập</button>
+<button class="auth-tab" data-tab="register">Đăng ký</button>
+</div>
+<div id="tabLogin">
+<button class="btn btn-google" id="googleBtn"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Tiếp tục với Google</button>
+<div class="auth-divider">hoặc</div>
+<div class="form-group"><label>Email</label><input type="email" placeholder="you@example.com" id="loginEmail"></div>
+<div class="form-group"><label>Mật khẩu</label><input type="password" placeholder="••••••••" id="loginPass"></div>
+<button class="btn btn-primary" id="loginBtn">Đăng nhập</button>
+</div>
+<div id="tabRegister" style="display:none">
+<button class="btn btn-google" id="googleBtn2"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Đăng ký với Google</button>
+<div class="auth-divider">hoặc</div>
+<div class="form-group"><label>Tên người dùng</label><input type="text" placeholder="Tên của bạn" id="regUser"></div>
+<div class="form-group"><label>Email</label><input type="email" placeholder="you@example.com" id="regEmail"></div>
+<div class="form-group"><label>Mật khẩu</label><input type="password" placeholder="Tối thiểu 8 ký tự" id="regPass"></div>
+<button class="btn btn-primary" id="registerBtn">Tạo tài khoản</button>
+</div>
+</div>
+</div>
+
+<div class="view" id="viewKey">
+<div class="card">
+<div class="key-header">
+<button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+<div style="flex:1"><div style="font-size:.9rem;font-weight:700">Key của bạn</div><div style="font-size:.66rem;color:var(--tm)">Phiên trình duyệt · 24 giờ</div></div>
+<div class="key-status" id="keyStatus" style="display:none"><span class="key-status__dot"></span> Hoạt động</div>
+</div>
+<div class="key-display">
+<div class="key-display__label">Access Key</div>
+<div class="key-value" id="keyValue">••••-••••-••••-••••</div>
+<div class="gen-progress" id="genProgress" style="display:none"><div class="gen-progress__bar" id="genBar"></div></div>
+<div class="key-meta" id="keyMeta" style="display:none">
+<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Hết hạn 24h</span>
+<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Browser-bound</span>
+</div>
+</div>
+<div class="gen-status" id="genStatus">Nhấn nút bên dưới để tạo key</div>
+<div class="key-actions" id="keyActions" style="display:none">
+<button class="btn btn-copy" id="copyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Sao chép</button>
+<button class="btn btn-secondary" id="regenBtn" style="flex:.55"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+</div>
+<button class="btn btn-primary" id="generateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Tạo Key ngay</button>
+<div class="info-row" id="infoRow" style="display:none">
+<div class="info-item"><span class="info-item__label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Trình duyệt</span><span class="info-item__value" id="browserInfo">—</span></div>
+<div class="info-item"><span class="info-item__label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Thời gian tạo</span><span class="info-item__value" id="timeInfo">—</span></div>
+<div class="info-item"><span class="info-item__label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Trạng thái</span><span class="info-item__value" style="color:var(--ok)">Đã xác minh</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal">
+<div class="modal">
+<div class="modal__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+<h3 id="modalTitle">Sẵn sàng</h3>
+<p id="modalDesc">Nội dung</p>
+<div class="modal__actions">
+<button class="modal-cancel" id="modalCancel">Hủy</button>
+<button class="modal-ok" id="modalOk">Tiếp tục</button>
+</div>
+</div>
+</div>
+
+<button class="sound-toggle" id="soundToggle" title="Âm thanh">
+<svg id="iconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+<svg id="iconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+</button>
+
+<script>
+(function(){
+/* AUDIO */
+var soundOn=false,actx=null;
+function ensure(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}
+function tone(f,d,type,vol,slide){
+  if(!soundOn||!actx)return;
+  type=type||'sine';vol=(vol||0.04)*2.8;slide=slide||0;
+  var o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;
+  o.frequency.setValueAtTime(f,actx.currentTime);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),actx.currentTime+d);
+  g.gain.setValueAtTime(Math.min(0.55,vol),actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0005,actx.currentTime+d);
+  o.connect(g);g.connect(actx.destination);
+  o.start();o.stop(actx.currentTime+d);
+}
+function noiseBurst(dur,vol){
+  if(!soundOn||!actx)return;
+  vol=(vol||0.05)*2.6;
+  var n=actx.createBufferSource();
+  var buf=actx.createBuffer(1,actx.sampleRate*dur,actx.sampleRate);
+  var data=buf.getChannelData(0);
+  for(var i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2.2);
+  n.buffer=buf;
+  var g=actx.createGain();
+  g.gain.setValueAtTime(Math.min(0.5,vol),actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0005,actx.currentTime+dur);
+  n.connect(g);g.connect(actx.destination);n.start();
+}
+/* UI SFX */
+function sfxClick(){tone(900,.04,'sine',.025);setTimeout(function(){tone(1200,.03,'sine',.015)},25)}
+function sfxHover(){tone(700,.025,'sine',.008)}
+function sfxWhoosh(){tone(140,.45,'triangle',.055,-110);noiseBurst(.25,.03)}
+function sfxTick(){tone(1000+Math.random()*400,.015,'sine',.01)}
+function sfxSuccess(){tone(523,.09,'sine',.035);setTimeout(function(){tone(659,.09,'sine',.03)},70);setTimeout(function(){tone(784,.12,'sine',.028)},150)}
+function sfxReveal(){tone(450,.15,'sine',.04,350)}
+function sfxChime(){[880,1108,1318].forEach(function(f,i){setTimeout(function(){tone(f,.16,'sine',.03)},i*65)})}
+
+/* ===== CAMERA SHAKE ===== */
+var shakeX=0,shakeY=0,shakePower=0;
+function triggerShake(power,duration){
+  shakePower=Math.max(shakePower,power);
+  var start=performance.now();
+  function decay(now){
+    var p=1-(now-start)/(duration||400);
+    if(p>0){shakePower=power*p;requestAnimationFrame(decay)}
+    else shakePower=0;
+  }
+  requestAnimationFrame(decay);
+}
+
+/* INTRO sounds + shake */
+function sfxOrb(){tone(90,.8,'sine',.04,40);tone(180,.6,'triangle',.025,80)}
+function sfxBoom(){
+  noiseBurst(.35,.12);
+  tone(38,.6,'sine',.18,-8);
+  tone(65,.45,'triangle',.12);
+  tone(100,.3,'sawtooth',.06);
+  setTimeout(function(){tone(220,.2,'sine',.05)},80);
+  triggerShake(18,550); // nitro boom
+}
+function sfxCrystal(){
+  tone(300,.3,'sine',.06,200);
+  setTimeout(function(){tone(500,.25,'sine',.05,150)},60);
+  setTimeout(function(){tone(750,.2,'triangle',.04)},140);
+  setTimeout(function(){tone(1100,.25,'sine',.03)},220);
+}
+function sfxText(){
+  [523,659,784,1046].forEach(function(f,i){setTimeout(function(){tone(f,.12,'sine',.03)},i*55)});
+}
+function sfxEpic1(){tone(100,.3,'sine',.14,-25);tone(200,.24,'triangle',.1);setTimeout(function(){tone(400,.18,'sine',.11)},90);noiseBurst(.12,.04);triggerShake(9,320)}
+function sfxEpic2(){tone(120,.26,'sine',.13,-20);tone(240,.22,'triangle',.1);setTimeout(function(){tone(480,.16,'sine',.11)},80);setTimeout(function(){tone(720,.14,'sine',.08)},160);noiseBurst(.1,.035);triggerShake(11,360)}
+function sfxEpic3(){tone(80,.35,'sine',.15,-12);tone(160,.28,'triangle',.11);setTimeout(function(){tone(320,.22,'sine',.12)},70);setTimeout(function(){tone(640,.18,'sine',.1)},150);setTimeout(function(){tone(1000,.22,'sine',.08)},260);noiseBurst(.15,.05);triggerShake(14,420)}
+function sfxLock(){tone(160,.25,'sine',.1);setTimeout(function(){tone(120,.3,'triangle',.09,-45)},100);noiseBurst(.08,.03);triggerShake(8,280)}
+function sfxKeyhole(){tone(260,.18,'sine',.09,240);setTimeout(function(){tone(520,.24,'sine',.1)},100);setTimeout(function(){tone(860,.18,'sine',.07)},230);noiseBurst(.1,.04);triggerShake(10,350)}
+function sfxSwell(){tone(60,.8,'sine',.03,30);tone(90,.7,'triangle',.02)}
+
+var amb=[];
+function startAmb(){
+  if(!soundOn||!actx||amb.length)return;
+  [42,63,84,126].forEach(function(f,i){
+    var o=actx.createOscillator(),g=actx.createGain();
+    o.type='sine';o.frequency.value=f;
+    g.gain.value=0.012+i*0.003;
+    o.connect(g);g.connect(actx.destination);o.start();
+    amb.push({o:o,g:g});
+  });
+}
+function stopAmb(){
+  amb.forEach(function(n){
+    n.g.gain.exponentialRampToValueAtTime(0.0004,actx.currentTime+.7);
+    setTimeout(function(){try{n.o.stop()}catch(e){}},800);
+  });
+  amb=[];
+}
+function setIcon(on){
+  document.getElementById('iconOff').style.display=on?'none':'block';
+  document.getElementById('iconOn').style.display=on?'block':'none';
+}
+document.getElementById('soundToggle').onclick=function(){
+  ensure();soundOn=!soundOn;setIcon(soundOn);
+  if(soundOn){startAmb();sfxClick()}else stopAmb();
+};
+document.getElementById('unmuteBtn').onclick=function(){
+  ensure();soundOn=true;setIcon(true);
+  this.textContent='Đã bật';startAmb();sfxClick();
+};
+
+/* ===== CINEMATIC INTRO + MOUNTAINS ===== */
+var canvas=document.getElementById('introCanvas'),ctx=canvas.getContext('2d');
+var W,H,cx,cy,t0=null,done=false,DUR=22;
+var parts=[],streaks=[],ribbons=[],stars=[],orbs=[],geoms=[];
+var stepPlayed=[false,false,false],boomDone=false;
+var played={orb:false,crystal:false,text:false,swell:false,lock:false,keyhole:false,geo:false,portal:false};
+
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;cx=W/2;cy=H/2}
+resize();window.addEventListener('resize',resize);
+
+for(var i=0;i<150;i++){
+  stars.push({x:Math.random(),y:Math.random()*0.65,s:0.35+Math.random()*2.3,a:0.12+Math.random()*0.55,z:0.25+Math.random()*0.75,tw:Math.random()*Math.PI*2});
+}
+
+function drawMountains(t,fade){
+  fade=fade==null?1:fade;
+  var baseY=H*0.72;
+  ctx.save();ctx.globalAlpha=0.55*fade;
+  ctx.beginPath();ctx.moveTo(0,H);
+  var peaks1=[[0,0.35],[0.08,0.28],[0.15,0.38],[0.22,0.18],[0.3,0.32],[0.38,0.12],[0.48,0.3],[0.55,0.2],[0.65,0.35],[0.72,0.15],[0.82,0.28],[0.9,0.22],[1,0.32]];
+  peaks1.forEach(function(p){ctx.lineTo(p[0]*W,baseY-p[1]*H*0.38+Math.sin(t*0.15+p[0]*3)*3)});
+  ctx.lineTo(W,H);ctx.closePath();
+  var g1=ctx.createLinearGradient(0,baseY-H*0.4,0,H);
+  g1.addColorStop(0,'#0a1628');g1.addColorStop(0.6,'#061018');g1.addColorStop(1,'#02060c');
+  ctx.fillStyle=g1;ctx.fill();
+  ctx.restore();
+
+  ctx.save();ctx.globalAlpha=0.75*fade;
+  ctx.beginPath();ctx.moveTo(0,H);
+  var peaks2=[[0,0.22],[0.1,0.3],[0.18,0.14],[0.28,0.28],[0.35,0.1],[0.45,0.25],[0.52,0.08],[0.62,0.22],[0.7,0.12],[0.8,0.26],[0.88,0.1],[0.95,0.2],[1,0.15]];
+  peaks2.forEach(function(p){ctx.lineTo(p[0]*W,baseY-p[1]*H*0.32+Math.sin(t*0.2+p[0]*4)*4)});
+  ctx.lineTo(W,H);ctx.closePath();
+  var g2=ctx.createLinearGradient(0,baseY-H*0.35,0,H);
+  g2.addColorStop(0,'#0c1e36');g2.addColorStop(0.5,'#081420');g2.addColorStop(1,'#030a12');
+  ctx.fillStyle=g2;ctx.fill();
+  ctx.globalAlpha=0.25*fade;
+  ctx.fillStyle='#a5f3fc';
+  peaks2.forEach(function(p){
+    if(p[1]>0.18){
+      var px=p[0]*W, py=baseY-p[1]*H*0.32;
+      ctx.beginPath();ctx.moveTo(px-18,py+8);ctx.lineTo(px,py-2);ctx.lineTo(px+18,py+8);ctx.closePath();ctx.fill();
+    }
+  });
+  ctx.restore();
+
+  ctx.save();ctx.globalAlpha=0.9*fade;
+  ctx.beginPath();ctx.moveTo(0,H);
+  var peaks3=[[0,0.12],[0.12,0.2],[0.2,0.06],[0.32,0.18],[0.4,0.04],[0.5,0.16],[0.58,0.05],[0.68,0.2],[0.78,0.08],[0.88,0.15],[1,0.1]];
+  peaks3.forEach(function(p){ctx.lineTo(p[0]*W,baseY-p[1]*H*0.22+Math.sin(t*0.25+p[0]*5)*3)});
+  ctx.lineTo(W,H);ctx.closePath();
+  var g3=ctx.createLinearGradient(0,baseY-H*0.25,0,H);
+  g3.addColorStop(0,'#0e2438');g3.addColorStop(0.55,'#071018');g3.addColorStop(1,'#01050a');
+  ctx.fillStyle=g3;ctx.fill();
+  ctx.globalAlpha=0.15*fade;
+  ctx.strokeStyle='#22d3ee';ctx.lineWidth=1.5;
+  ctx.beginPath();
+  peaks3.forEach(function(p,i){var px=p[0]*W,py=baseY-p[1]*H*0.22;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py)});
+  ctx.stroke();
+  ctx.restore();
+
+  var fog=ctx.createLinearGradient(0,H*0.65,0,H);
+  fog.addColorStop(0,'transparent');
+  fog.addColorStop(0.4,'rgba(6,182,212,'+(0.03*fade)+')');
+  fog.addColorStop(1,'rgba(2,8,16,'+(0.5*fade)+')');
+  ctx.fillStyle=fog;ctx.fillRect(0,H*0.6,W,H*0.4);
+}
+
+function spawnExplosion(){
+  for(var i=0;i<150;i++){
+    var a=Math.random()*Math.PI*2,sp=7+Math.random()*18;
+    streaks.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,len:60+Math.random()*140,life:1,decay:0.007+Math.random()*0.011,w:1.6+Math.random()*3.5,hue:175+Math.random()*55});
+  }
+  for(var i=0;i<240;i++){
+    var a=Math.random()*Math.PI*2,s=2+Math.random()*14;
+    parts.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:0.005+Math.random()*0.014,sz:1.3+Math.random()*4.5,c:Math.random()>0.4?'#67e8f9':(Math.random()>0.5?'#a5f3fc':'#e0f2fe'),z:0.4+Math.random()});
+  }
+  for(var i=0;i<12;i++){
+    var a=Math.random()*Math.PI*2,d=55+Math.random()*100;
+    orbs.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,vx:(Math.random()-0.5)*2,vy:(Math.random()-0.5)*2,r:4+Math.random()*10,life:1,decay:0.002+Math.random()*0.004});
+  }
+}
+
+function spawnGeoms(){
+  for(var i=0;i<14;i++){
+    geoms.push({x:cx+(Math.random()-0.5)*W*0.75,y:cy+(Math.random()-0.5)*H*0.4,z:0.3+Math.random()*0.7,rot:Math.random()*Math.PI*2,spin:(Math.random()-0.5)*0.045,size:14+Math.random()*30,type:Math.floor(Math.random()*3),life:1});
+  }
+}
+
+function updateRibbons(t){
+  if(ribbons.length<10 && t>1.8 && t<14.5){
+    ribbons.push({phase:Math.random()*Math.PI*2,amp:60+Math.random()*90,speed:0.28+Math.random()*0.8,yOff:(Math.random()-0.5)*100,w:2.2+Math.random()*4,life:1,segs:48});
+  }
+}
+function drawRibbons(t,fade){
+  fade=fade==null?1:fade;
+  ribbons.forEach(function(r){
+    ctx.beginPath();
+    for(var i=0;i<=r.segs;i++){
+      var p=i/r.segs;
+      var x=cx-220+p*440;
+      var y=cy+r.yOff+Math.sin(p*3.5+t*r.speed+r.phase)*r.amp*(0.35+0.65*Math.sin(p*Math.PI));
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    var grad=ctx.createLinearGradient(cx-220,0,cx+220,0);
+    grad.addColorStop(0,'transparent');
+    grad.addColorStop(0.25,'rgba(103,232,249,'+(0.1*r.life*fade)+')');
+    grad.addColorStop(0.5,'rgba(165,243,252,'+(0.32*r.life*fade)+')');
+    grad.addColorStop(0.75,'rgba(103,232,249,'+(0.1*r.life*fade)+')');
+    grad.addColorStop(1,'transparent');
+    ctx.strokeStyle=grad;ctx.lineWidth=r.w*2.5;ctx.lineCap='round';ctx.stroke();
+    ctx.lineWidth=r.w*0.5;ctx.stroke();
+  });
+}
+
+function drawCrystal(x,y,sc,al,rot,t){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot||0);ctx.scale(sc,sc);ctx.globalAlpha=al;
+  var bloom=ctx.createRadialGradient(0,-5,2,0,0,80);
+  bloom.addColorStop(0,'rgba(165,243,252,0.55)');bloom.addColorStop(0.2,'rgba(34,211,238,0.22)');bloom.addColorStop(0.5,'rgba(6,182,212,0.08)');bloom.addColorStop(1,'transparent');
+  ctx.fillStyle=bloom;ctx.beginPath();ctx.arc(0,0,80,0,Math.PI*2);ctx.fill();
+  ctx.shadowColor='#22d3ee';ctx.shadowBlur=36;
+  ctx.fillStyle='rgba(8,145,178,0.4)';
+  [[0,-20],[-3,-16],[3,-16],[-4,-12],[4,-12],[-5,-8],[5,-8],[-4,-4],[4,-4],[-2,0],[2,0],[0,4]].forEach(function(p){ctx.fillRect(p[0]*2.2-1.6,p[1]*2.2-1.6,4.3,4.3)});
+  var clusters=[
+    {ox:0,oy:-8,sc:1.2,px:[[0,-20],[-1,-18],[1,-18],[0,-16],[-2,-16],[2,-16],[-3,-14],[-1,-14],[1,-14],[3,-14],[-3,-12],[-1,-12],[1,-12],[3,-12],[-4,-10],[-2,-10],[0,-10],[2,-10],[4,-10],[-3,-8],[-1,-8],[1,-8],[3,-8],[-2,-6],[0,-6],[2,-6],[-1,-4],[1,-4],[0,-2]]},
+    {ox:-11,oy:-1,sc:0.98,px:[[0,-14],[-1,-12],[1,-12],[0,-10],[-2,-10],[2,-10],[-3,-8],[-1,-8],[1,-8],[3,-8],[-2,-6],[0,-6],[2,-6],[-1,-4],[1,-4],[0,-2],[-1,0],[1,0],[0,2]]},
+    {ox:11,oy:-1,sc:0.98,px:[[0,-14],[-1,-12],[1,-12],[0,-10],[-2,-10],[2,-10],[-3,-8],[-1,-8],[1,-8],[3,-8],[-2,-6],[0,-6],[2,-6],[-1,-4],[1,-4],[0,-2],[-1,0],[1,0],[0,2]]},
+    {ox:-6,oy:9,sc:0.84,px:[[0,-8],[-1,-6],[1,-6],[0,-4],[-2,-4],[2,-4],[-1,-2],[1,-2],[0,0],[-1,2],[1,2]]},
+    {ox:6,oy:9,sc:0.84,px:[[0,-8],[-1,-6],[1,-6],[0,-4],[-2,-4],[2,-4],[-1,-2],[1,-2],[0,0],[-1,2],[1,2]]}
+  ];
+  clusters.forEach(function(c){
+    var s=c.sc;
+    ctx.fillStyle='rgba(6,182,212,0.55)';c.px.forEach(function(p){ctx.fillRect(c.ox+p[0]*2*s-1.4,c.oy+p[1]*2*s-1.4+1.6,3.7,3.7)});
+    ctx.fillStyle='#22d3ee';c.px.forEach(function(p){ctx.fillRect(c.ox+p[0]*2*s-1.3,c.oy+p[1]*2*s-1.3,3.5,3.5)});
+    ctx.fillStyle='#e0f2fe';ctx.shadowBlur=12;c.px.slice(0,6).forEach(function(p){ctx.fillRect(c.ox+p[0]*2*s-0.9,c.oy+p[1]*2*s-0.9,2.4,2.4)});
+    ctx.fillStyle='rgba(255,255,255,0.9)';c.px.slice(0,2).forEach(function(p){ctx.fillRect(c.ox+p[0]*2*s-0.6,c.oy+p[1]*2*s-0.6,1.8,1.8)});
+  });
+  if(t){for(var i=0;i<14;i++){var ang=t*1.3+i*0.6;var rr=32+Math.sin(t*2+i)*14;ctx.globalAlpha=al*(0.25+0.55*Math.sin(t*3.2+i));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(Math.cos(ang)*rr,Math.sin(ang)*rr-5,1.4+Math.sin(t*4+i)*1,0,Math.PI*2);ctx.fill()}}
+  ctx.restore();
+}
+
+function drawRings(t,base,fade){
+  fade=fade==null?1:fade;
+  for(var i=0;i<6;i++){
+    var r=(base||54)+i*30+Math.sin(t*1.1+i)*10;
+    var a=Math.max(0,.15-i*.02)*Math.min(1,(t-2)*0.9)*fade;
+    ctx.beginPath();ctx.arc(cx,cy-8,r,0,Math.PI*2);ctx.strokeStyle='rgba(103,232,249,'+(a*0.4)+')';ctx.lineWidth=3.4;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy-8,r,0,Math.PI*2);ctx.strokeStyle='rgba(165,243,252,'+a+')';ctx.lineWidth=1.2;ctx.stroke();
+  }
+}
+
+function drawText(str,y,sz,al,track){
+  track=track||8;ctx.save();ctx.globalAlpha=al;
+  ctx.font='800 '+sz+'px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='#22d3ee';ctx.shadowBlur=32;ctx.fillStyle='rgba(34,211,238,0.4)';
+  var chars=str.split(''),tw=0;chars.forEach(function(c){tw+=ctx.measureText(c).width+track});tw-=track;
+  var x=cx-tw/2;chars.forEach(function(c){ctx.fillText(c,x+ctx.measureText(c).width/2,y);x+=ctx.measureText(c).width+track});
+  ctx.shadowBlur=14;ctx.fillStyle='#f0f9ff';x=cx-tw/2;
+  chars.forEach(function(c){ctx.fillText(c,x+ctx.measureText(c).width/2,y);x+=ctx.measureText(c).width+track});
+  ctx.restore();
+}
+
+function drawHexStep(x,y,icon,label,active,prog){
+  var s=26;ctx.save();ctx.globalAlpha=prog;
+  if(active){var hg=ctx.createRadialGradient(x,y,2,x,y,s*2);hg.addColorStop(0,'rgba(34,211,238,0.2)');hg.addColorStop(1,'transparent');ctx.fillStyle=hg;ctx.beginPath();ctx.arc(x,y,s*2,0,Math.PI*2);ctx.fill()}
+  ctx.beginPath();for(var i=0;i<6;i++){var a=Math.PI/3*i-Math.PI/6;var px=x+Math.cos(a)*s,py=y+Math.sin(a)*s;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py)}ctx.closePath();
+  if(active){ctx.fillStyle='rgba(34,211,238,0.1)';ctx.fill();ctx.strokeStyle='#22d3ee';ctx.shadowColor='#22d3ee';ctx.shadowBlur=22}else{ctx.strokeStyle='rgba(34,211,238,0.12)'}
+  ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+  ctx.strokeStyle=active?'#67e8f9':'rgba(148,163,184,0.24)';ctx.fillStyle=active?'#67e8f9':'rgba(148,163,184,0.24)';ctx.lineWidth=1.9;
+  if(icon==='shield'){ctx.beginPath();ctx.moveTo(x,y-9);ctx.lineTo(x+8,y-4);ctx.lineTo(x+8,y+3);ctx.quadraticCurveTo(x+8,y+9,x,y+11);ctx.quadraticCurveTo(x-8,y+9,x-8,y+3);ctx.lineTo(x-8,y-4);ctx.closePath();ctx.stroke()}
+  else if(icon==='check'){ctx.beginPath();ctx.moveTo(x-7,y);ctx.lineTo(x-1,y+6);ctx.lineTo(x+8,y-5);ctx.stroke()}
+  else if(icon==='key'){ctx.beginPath();ctx.arc(x-2,y-2,4.5,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(x+1.5,y+1.5);ctx.lineTo(x+9,y+7);ctx.lineTo(x+7,y+9);ctx.stroke()}
+  ctx.font='600 9px Inter';ctx.textAlign='center';ctx.fillStyle=active?'#a5f3fc':'rgba(148,163,184,0.2)';ctx.fillText(label,x,y+s+15);ctx.restore();
+}
+
+function drawLock(prog,fade){
+  fade=fade==null?1:fade;var a=Math.min(1,prog*1.8)*fade;ctx.save();ctx.globalAlpha=a;ctx.translate(cx,cy+6);
+  var lg=ctx.createRadialGradient(0,0,5,0,0,70);lg.addColorStop(0,'rgba(34,211,238,0.25)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.beginPath();ctx.arc(0,0,70,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#22d3ee';ctx.lineWidth=3;ctx.shadowColor='#22d3ee';ctx.shadowBlur=24;
+  ctx.beginPath();ctx.arc(0,-22,16,Math.PI,0);ctx.stroke();
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(-22,-8,44,36,7);else ctx.rect(-22,-8,44,36);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,4,5,0,Math.PI*2);ctx.fillStyle='#22d3ee';ctx.fill();ctx.fillRect(-2,6,4,11);
+  for(var i=0;i<22;i++){var ang=(i/22)*Math.PI*2+prog*0.7;var r1=50+Math.sin(prog*3+i)*5,r2=r1+12;ctx.beginPath();ctx.moveTo(Math.cos(ang)*r1,Math.sin(ang)*r1);ctx.lineTo(Math.cos(ang)*r2,Math.sin(ang)*r2);ctx.strokeStyle='rgba(103,232,249,'+(0.24*a)+')';ctx.lineWidth=1.4;ctx.stroke()}
+  ctx.restore();
+}
+
+function drawKeyhole(prog,fade){
+  fade=fade==null?1:fade;var a=Math.min(1,prog*1.8)*fade;ctx.save();ctx.globalAlpha=a;ctx.translate(cx,cy);
+  var kg=ctx.createRadialGradient(0,0,5,0,0,80);kg.addColorStop(0,'rgba(34,211,238,0.28)');kg.addColorStop(1,'transparent');ctx.fillStyle=kg;ctx.beginPath();ctx.arc(0,0,80,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#22d3ee';ctx.lineWidth=3;ctx.shadowColor='#22d3ee';ctx.shadowBlur=26;
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(-34,-34,68,68,16);else ctx.rect(-34,-34,68,68);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,-6,10,0,Math.PI*2);ctx.fillStyle='#22d3ee';ctx.fill();
+  ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(-4,20);ctx.lineTo(4,20);ctx.lineTo(6,2);ctx.closePath();ctx.fill();
+  for(var i=0;i<28;i++){var ang=(i/28)*Math.PI*2+prog*0.4;var r1=48,r2=48+16+Math.sin(prog*4+i)*10;ctx.beginPath();ctx.moveTo(Math.cos(ang)*r1,Math.sin(ang)*r1);ctx.lineTo(Math.cos(ang)*r2,Math.sin(ang)*r2);ctx.strokeStyle='rgba(251,191,36,'+(0.36*a)+')';ctx.lineWidth=1.6;ctx.stroke()}
+  ctx.restore();
+}
+
+function drawGeoms(t,fade){
+  fade=fade==null?1:fade;
+  geoms.forEach(function(g){
+    g.rot+=g.spin;ctx.save();ctx.translate(g.x,g.y);ctx.rotate(g.rot);ctx.globalAlpha=(0.15+0.28*g.z)*fade;
+    ctx.strokeStyle='#67e8f9';ctx.lineWidth=1.3*g.z;var s=g.size*g.z;
+    if(g.type===0){ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*0.9,s*0.6);ctx.lineTo(-s*0.9,s*0.6);ctx.closePath();ctx.stroke()}
+    else if(g.type===1){ctx.strokeRect(-s*0.6,-s*0.6,s*1.2,s*1.2)}
+    else{ctx.beginPath();for(var i=0;i<6;i++){var a=Math.PI/3*i-Math.PI/6;var px=Math.cos(a)*s*0.7,py=Math.sin(a)*s*0.7;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py)}ctx.closePath();ctx.stroke()}
+    ctx.restore();
+  });
+}
+
+function drawPortal(t,fade){
+  fade=fade==null?1:fade;var p=Math.min(1,(t-0.2)*1.2);ctx.save();ctx.globalAlpha=p*fade;
+  for(var i=0;i<5;i++){var r=32+i*24+Math.sin(t*2+i)*7;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(103,232,249,'+(0.13-i*0.018)+')';ctx.lineWidth=2.2-i*0.25;ctx.stroke()}
+  for(var i=0;i<3;i++){var start=t*1.5+i*2.1;ctx.beginPath();ctx.arc(cx,cy,58+i*20,start,start+1.3);ctx.strokeStyle='rgba(165,243,252,'+(0.28-i*0.06)+')';ctx.lineWidth=2.6;ctx.stroke()}
+  ctx.restore();
+}
+
+function frame(ts){
+  if(!t0)t0=ts;var t=(ts-t0)/1000;
+  var globalFade=t>20.5?Math.max(0,1-(t-20.5)/1.5):1;
+
+  // sky
+  var sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#020617');sky.addColorStop(0.4,'#0a1628');sky.addColorStop(0.7,'#0c1a2e');sky.addColorStop(1,'#030a14');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+  // ===== APPLY CAMERA SHAKE =====
+  if(shakePower>0.3){
+    shakeX=(Math.random()-0.5)*shakePower;
+    shakeY=(Math.random()-0.5)*shakePower;
+  }else{
+    shakeX*=0.7;shakeY*=0.7;
+  }
+  ctx.save();
+  ctx.translate(shakeX,shakeY);
+
+  // aurora
+  if(t>0.3){
+    for(var i=0;i<3;i++){
+      var ax=cx+Math.sin(t*0.25+i)*100;var ay=H*0.25+Math.cos(t*0.2+i)*40;
+      var ag=ctx.createRadialGradient(ax,ay,0,ax,ay,H*0.45);
+      ag.addColorStop(0,'rgba(6,182,212,'+(0.05+Math.sin(t*0.35+i)*0.02)*globalFade+')');
+      ag.addColorStop(0.5,'rgba(59,130,246,'+(0.02*globalFade)+')');ag.addColorStop(1,'transparent');
+      ctx.fillStyle=ag;ctx.fillRect(0,0,W,H*0.7);
+    }
+  }
+
+  // stars
+  stars.forEach(function(s){
+    var px=s.x*W+Math.sin(t*0.12*s.z)*8*s.z;
+    var py=s.y*H*0.7+Math.cos(t*0.1*s.z)*5*s.z;
+    ctx.globalAlpha=s.a*(0.5+0.5*Math.sin(t*2.4+s.tw))*s.z*globalFade;
+    ctx.fillStyle='#e0f2fe';ctx.fillRect(px,py,s.s*s.z,s.s*s.z);
+  });
+  ctx.globalAlpha=1;
+
+  drawMountains(t,globalFade);
+  updateRibbons(t);
+
+  if(t<2.2){
+    if(t>0.25&&!played.portal){played.portal=true;sfxSwell()}
+    var pf=t<1.8?1:1-(t-1.8)/0.4;
+    drawPortal(t,pf*globalFade);
+  }
+
+  if(t>=0.55&&t<1.9){
+    if(t>0.65&&!played.orb){played.orb=true;sfxOrb()}
+    var p=Math.min(1,(t-0.55)/1.15),r=2+p*44;
+    var of=t<1.55?1:1-(t-1.55)/0.35;
+    for(var i=3;i>=0;i--){
+      var gg=ctx.createRadialGradient(cx,cy-H*0.08,0,cx,cy-H*0.08,r*(1.7+i*0.5));
+      gg.addColorStop(0,'rgba(165,243,252,'+(0.55*p/(i+1)*of*globalFade)+')');
+      gg.addColorStop(0.4,'rgba(34,211,238,'+(0.16*p/(i+1)*of*globalFade)+')');
+      gg.addColorStop(1,'transparent');
+      ctx.fillStyle=gg;ctx.beginPath();ctx.arc(cx,cy-H*0.08,r*(1.7+i*0.5),0,Math.PI*2);ctx.fill();
+    }
+    ctx.beginPath();ctx.arc(cx,cy-H*0.08,r*0.14,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,'+(p*of*globalFade)+')';ctx.fill();
+  }
+
+  if(t>=1.2&&t<1.45&&!boomDone){boomDone=true;spawnExplosion();spawnGeoms();sfxBoom()}
+
+  for(var i=streaks.length-1;i>=0;i--){
+    var s=streaks[i];s.x+=s.vx;s.y+=s.vy;s.vx*=0.955;s.vy*=0.955;s.life-=s.decay;
+    if(s.life<=0){streaks.splice(i,1);continue}
+    ctx.globalAlpha=s.life*0.9*globalFade;ctx.strokeStyle='hsl('+s.hue+',90%,75%)';ctx.lineWidth=s.w;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*s.len*0.1,s.y-s.vy*s.len*0.1);ctx.stroke();
+  }
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vx*=0.965;p.vy*=0.965;p.life-=p.decay;
+    if(p.life<=0){parts.splice(i,1);continue}
+    ctx.globalAlpha=p.life*p.z*globalFade;ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,p.sz*p.z,p.sz*p.z);
+  }
+  for(var i=orbs.length-1;i>=0;i--){
+    var o=orbs[i];o.x+=o.vx;o.y+=o.vy;o.life-=o.decay;
+    if(o.life<=0){orbs.splice(i,1);continue}
+    var og=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*2.2);
+    og.addColorStop(0,'rgba(165,243,252,'+(0.55*o.life*globalFade)+')');og.addColorStop(1,'transparent');
+    ctx.fillStyle=og;ctx.beginPath();ctx.arc(o.x,o.y,o.r*2.2,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  if(t>=1.8&&t<5){
+    var gf=1;if(t<2.3)gf=(t-1.8)/0.5;if(t>4.2)gf=1-(t-4.2)/0.8;
+    drawGeoms(t,gf*globalFade);
+  }
+
+  if(t>2.2&&t<14.5)drawRibbons(t,globalFade);
+
+  if(t>=2.4&&t<12){
+    if(t>2.55&&!played.crystal){played.crystal=true;sfxCrystal()}
+    var sc=2.05,al=1,rot=Math.sin(t*0.55)*0.08;
+    if(t<3.8){var p=(t-2.4)/1.4;sc=0.08+p*1.97;al=p}
+    if(t>11)al=1-(t-11)/1;
+    var camY=Math.sin(t*0.45)*6;
+    drawRings(t,56,al*globalFade);
+    if(t>3.9){
+      for(var i=0;i<22;i++){
+        var ang=t*0.36+i*(Math.PI*2/22);var rr=110+Math.sin(t*1.25+i)*26;var zz=0.4+0.6*Math.sin(ang+t);
+        ctx.globalAlpha=(0.1+0.15*zz)*Math.min(1,(t-3.9)*2)*al*globalFade;
+        ctx.fillStyle=zz>0.55?'#e0f2fe':'#22d3ee';
+        ctx.save();ctx.translate(cx+Math.cos(ang)*rr,cy-H*0.06+Math.sin(ang)*rr+camY);ctx.rotate(ang+t*0.5);
+        ctx.fillRect(-5.5*zz,-2,11*zz,3.8*zz);ctx.restore();
+      }
+      ctx.globalAlpha=1;
+    }
+    drawCrystal(cx,cy-H*0.08+camY,sc,al*globalFade,rot,t);
+  }
+
+  if(t>=5.3&&t<11.5){
+    if(t>5.4&&!played.text){played.text=true;sfxText()}
+    var p=Math.min(1,(t-5.3)/0.8);if(t>10.5)p=1-(t-10.5)/1;
+    var camY=Math.sin(t*0.45)*4;
+    drawText('RETDIK',cy-H*0.08+70+camY,38,p*globalFade,12);
+    drawText('STUDIO',cy-H*0.08+106+camY,15,p*0.7*globalFade,14);
+  }
+
+  if(t>=10.2&&t<10.8&&!played.swell){played.swell=true;sfxSwell()}
+
+  if(t>=11&&t<15.8){
+    var stepFade=1;if(t<11.4)stepFade=(t-11)/0.4;if(t>15)stepFade=1-(t-15)/0.8;
+    var sp=Math.min(120,W*0.27),sy=cy-H*0.02;
+    ctx.save();ctx.globalAlpha=stepFade*globalFade;
+    var p1=Math.min(1,Math.max(0,(t-11.1)/0.4));var a1=t>11.3;
+    drawHexStep(cx-sp,sy,'shield','SESSION',a1,p1);
+    if(a1&&!stepPlayed[0]){stepPlayed[0]=true;sfxEpic1()}
+    if(t>11.7){var lp=Math.min(1,(t-11.7)/0.3);ctx.beginPath();ctx.moveTo(cx-sp+28,sy);ctx.lineTo(cx-sp+28+(sp-56)*lp,sy);ctx.strokeStyle='rgba(34,211,238,'+(0.55*lp)+')';ctx.lineWidth=2;ctx.stroke()}
+    var p2=Math.min(1,Math.max(0,(t-12.1)/0.4));var a2=t>12.3;
+    drawHexStep(cx,sy,'check','PROOF',a2,p2);
+    if(a2&&!stepPlayed[1]){stepPlayed[1]=true;sfxEpic2()}
+    if(t>12.8){var lp=Math.min(1,(t-12.8)/0.3);ctx.beginPath();ctx.moveTo(cx+28,sy);ctx.lineTo(cx+28+(sp-56)*lp,sy);ctx.strokeStyle='rgba(34,211,238,'+(0.55*lp)+')';ctx.lineWidth=2;ctx.stroke()}
+    var p3=Math.min(1,Math.max(0,(t-13.3)/0.4));var a3=t>13.5;
+    drawHexStep(cx+sp,sy,'key','KEY',a3,p3);
+    if(a3&&!stepPlayed[2]){stepPlayed[2]=true;sfxEpic3()}
+    ctx.restore();
+  }
+
+  if(t>=15.2&&t<17.3){
+    if(!played.lock){played.lock=true;sfxLock()}
+    var lf=1;if(t<15.6)lf=(t-15.2)/0.4;if(t>16.6)lf=1-(t-16.6)/0.7;
+    drawLock(t-15.2,lf*globalFade);
+  }
+  if(t>=16.8&&t<19){
+    if(!played.keyhole){played.keyhole=true;sfxKeyhole()}
+    var kf=1;if(t<17.2)kf=(t-16.8)/0.4;if(t>18.2)kf=1-(t-18.2)/0.8;
+    drawKeyhole(t-16.8,kf*globalFade);
+  }
+  if(t>=18.5&&t<22){
+    var p=Math.min(1,(t-18.5)/0.45);var fade=t>20?Math.max(0,1-(t-20)/2):1;
+    drawCrystal(cx,cy-H*0.06,1.7,p*fade*globalFade,0,t);
+    drawText('RETDIK',cy-H*0.06+60,34,p*fade*globalFade,11);
+    drawText('STUDIO',cy-H*0.06+92,14,p*fade*0.65*globalFade,13);
+  }
+
+  if(t>20.8){ctx.fillStyle='rgba(1,4,10,'+Math.min(1,(t-20.8)/1.2)+')';ctx.fillRect(0,0,W,H)}
+
+  // ===== END CAMERA SHAKE =====
+  ctx.restore();
+
+  if(t<DUR&&!done)requestAnimationFrame(frame);
+  else if(!done)endIntro();
+}
+
+function endIntro(){
+  if(done)return;done=true;
+  sfxWhoosh();stopAmb();
+  document.getElementById('intro').classList.add('hide');
+  setTimeout(function(){document.getElementById('app').classList.add('show');sfxChime()},450);
+}
+document.getElementById('skipBtn').onclick=function(){ensure();sfxClick();endIntro()};
+requestAnimationFrame(frame);
+
+/* UI logic */
+function showView(id){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});document.getElementById(id).classList.add('active')}
+var CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function rndKey(){var p=[];for(var i=0;i<4;i++){var s='';for(var j=0;j<4;j++)s+=CH[Math.floor(Math.random()*CH.length)];p.push(s)}return p.join('-')}
+var genning=false;
+function doGenerate(){
+  if(genning)return;genning=true;
+  var keyEl=document.getElementById('keyValue'),prog=document.getElementById('genProgress'),bar=document.getElementById('genBar');
+  var st=document.getElementById('genStatus'),acts=document.getElementById('keyActions'),meta=document.getElementById('keyMeta');
+  var info=document.getElementById('infoRow'),badge=document.getElementById('keyStatus'),gbtn=document.getElementById('generateBtn');
+  gbtn.style.display='none';acts.style.display='none';meta.style.display='none';info.style.display='none';badge.style.display='none';
+  prog.style.display='block';keyEl.classList.add('rolling');keyEl.classList.remove('revealed');st.classList.add('active');
+  document.getElementById('link1').classList.add('done');document.getElementById('badge1').textContent='Verified';document.getElementById('badge1').style.cssText='background:#d1fae5;color:#065f46';
+  setTimeout(function(){document.getElementById('link2').classList.add('done');document.getElementById('badge2').textContent='Verified';document.getElementById('badge2').style.cssText='background:#d1fae5;color:#065f46'},700);
+  var steps=['Đang kết nối...','Xác minh phiên...','Tạo hash...','Gán key...','Hoàn tất!'],total=2400,start=Date.now(),final=rndKey();
+  function tick(){
+    var el=Date.now()-start,pct=Math.min(100,(el/total)*100);bar.style.width=pct+'%';
+    st.textContent=steps[Math.min(steps.length-1,Math.floor((el/total)*steps.length))];
+    if(el<total-150){keyEl.textContent=rndKey();sfxTick()}
+    if(el<total)requestAnimationFrame(tick);
+    else{
+      keyEl.textContent=final;keyEl.classList.remove('rolling');keyEl.classList.add('revealed');
+      prog.style.display='none';st.textContent='Key đã sẵn sàng!';st.classList.remove('active');
+      acts.style.display='flex';meta.style.display='flex';info.style.display='flex';badge.style.display='flex';
+      sfxReveal();setTimeout(sfxSuccess,150);
+      var ua=navigator.userAgent,br='Browser';
+      if(ua.indexOf('Chrome')>-1)br='Chrome';else if(ua.indexOf('Firefox')>-1)br='Firefox';else if(ua.indexOf('Safari')>-1)br='Safari';
+      document.getElementById('browserInfo').textContent=br;
+      var n=new Date();document.getElementById('timeInfo').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' · '+n.getDate()+'/'+(n.getMonth()+1);
+      document.getElementById('vaultEmpty').textContent=final+' · còn 24h';genning=false;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+document.getElementById('startBtn').onclick=function(){sfxClick();showView('viewKey')};
+document.getElementById('backBtn').onclick=function(){sfxClick();showView('viewHome')};
+document.getElementById('generateBtn').onclick=function(){sfxClick();doGenerate()};
+document.getElementById('regenBtn').onclick=function(){sfxClick();document.getElementById('generateBtn').style.display='flex';document.getElementById('keyActions').style.display='none';document.getElementById('keyValue').textContent='••••-••••-••••-••••';document.getElementById('keyValue').classList.remove('revealed');document.getElementById('genStatus').textContent='Nhấn nút để tạo key mới';document.getElementById('keyMeta').style.display='none';document.getElementById('infoRow').style.display='none';document.getElementById('keyStatus').style.display='none'};
+document.getElementById('copyBtn').onclick=function(){var k=document.getElementById('keyValue').textContent;navigator.clipboard.writeText(k).then(function(){var b=document.getElementById('copyBtn');b.classList.add('copied');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg> Đã sao chép';sfxSuccess();setTimeout(function(){b.classList.remove('copied');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Sao chép'},1800)})};
+document.getElementById('authBtn').onclick=function(){sfxClick();showView('viewAuth')};
+document.getElementById('backAuth').onclick=function(){sfxClick();showView('viewHome')};
+document.querySelectorAll('.auth-tab').forEach(function(tab){tab.onclick=function(){sfxClick();document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('active')});tab.classList.add('active');var isLogin=tab.dataset.tab==='login';document.getElementById('tabLogin').style.display=isLogin?'block':'none';document.getElementById('tabRegister').style.display=isLogin?'none':'block'}});
+document.getElementById('googleBtn').onclick=document.getElementById('googleBtn2').onclick=function(){sfxClick();openM('Google Sign-In','Đang chuyển đến Google...\n(Demo)')};
+document.getElementById('loginBtn').onclick=function(){sfxClick();openM('Đã đăng nhập','Chào mừng trở lại!')};
+document.getElementById('registerBtn').onclick=function(){sfxClick();openM('Tạo tài khoản thành công','Tài khoản RETDIK đã được tạo!')};
+var modal=document.getElementById('modal');
+function openM(t,d){document.getElementById('modalTitle').textContent=t;document.getElementById('modalDesc').textContent=d;modal.classList.add('show');sfxClick()}
+function closeM(){modal.classList.remove('show');sfxClick()}
+document.getElementById('modalCancel').onclick=closeM;document.getElementById('modalOk').onclick=function(){closeM();sfxSuccess()};
+modal.onclick=function(e){if(e.target===modal)closeM()};
+document.getElementById('guideCard').onclick=function(){openM('Video hướng dẫn','Xem video từng bước để lấy key.')};
+document.getElementById('buyBtn').onclick=document.getElementById('promoBuy').onclick=function(){openM('Mua Key trọn đời','Key trọn đời 100.000 VND. Liên hệ @Andes.')};
+document.getElementById('discordBtn').onclick=function(e){
+  e.preventDefault();
+  var link='https://discord.gg/bfVamNdrt';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(function(){
+      openM('Discord','Đã sao chép link Discord!\n'+link);
+      sfxSuccess();
+    }).catch(function(){
+      openM('Discord','Link Discord:\n'+link);
+    });
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=link;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');openM('Discord','Đã sao chép link Discord!\n'+link);sfxSuccess()}
+    catch(err){openM('Discord','Link Discord:\n'+link)}
+    document.body.removeChild(ta);
+  }
+};
+document.getElementById('langBtn').onclick=function(){sfxClick();var b=this;if(b.textContent.indexOf('Việt')>-1)b.innerHTML=b.innerHTML.replace('Tiếng Việt','English');else b.innerHTML=b.innerHTML.replace('English','Tiếng Việt')};
+document.querySelectorAll('.btn,.pill,.guide,.promo__btn,.back-btn,.auth-tab').forEach(function(el){el.addEventListener('mouseenter',sfxHover)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
+})();
+</script>
+</body>
+</html>
